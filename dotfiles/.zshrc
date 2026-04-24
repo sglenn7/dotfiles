@@ -138,6 +138,14 @@ if command -v ssh-agent &>/dev/null && command -v ssh-add &>/dev/null; then
 fi
 
 # ==============================================================
+# WSL-specific Configuration
+# ==============================================================
+
+if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
+  export BROWSER=wslview
+fi
+
+# ==============================================================
 # Shell Aliases
 # ==============================================================
 # Custom shortcuts for common commands.
@@ -145,6 +153,8 @@ fi
 # Directory listing — colorized and detailed
 alias la="ls -lah"
 alias ll="ls -lh"
+alias venv="uv venv .venv && source .venv/bin/activate"
+alias activate="source .venv/bin/activate"
 
 # ==============================================================
 # Git Aliases (Optional — uncomment to use)
