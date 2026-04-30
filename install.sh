@@ -110,6 +110,7 @@ backup_existing() {
     "$HOME/.zshenv"
     "$HOME/.config/zsh/.zshrc"
     "$HOME/.config/zsh/.p10k.zsh"
+    "$HOME/.config/zsh/zsh-plugins"
     "$VSCODE_SETTINGS_PATH/settings.json"
     "$VSCODE_SETTINGS_PATH/keybindings.json"
   )
@@ -300,23 +301,30 @@ install_shell() {
     success "Powerlevel10k installed."
   fi
 
-  # zsh-autosuggestions
-  if [[ -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]]; then
-    info "zsh-autosuggestions already installed."
-  else
-    info "Installing zsh-autosuggestions..."
-    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
-    success "zsh-autosuggestions installed."
+  # Install custom plugins from the shared zsh-plugins file
+  local plugins_file="$DOTFILES_DIR/zsh-plugins"
+  if [[ ! -f "$plugins_file" ]]; then
+    warn "zsh-plugins file not found at $plugins_file — skipping plugin install."
+    echo ""
+    return
   fi
 
-  # zsh-syntax-highlighting
-  if [[ -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]]; then
-    info "zsh-syntax-highlighting already installed."
-  else
-    info "Installing zsh-syntax-highlighting..."
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
-    success "zsh-syntax-highlighting installed."
-  fi
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+
+    local name url
+    read -r name url _ <<< "$line"
+
+    [[ -z "$url" ]] && continue
+
+    if [[ -d "$ZSH_CUSTOM/plugins/$name" ]]; then
+      info "$name already installed."
+    else
+      info "Installing $name..."
+      git clone --depth=1 "$url" "$ZSH_CUSTOM/plugins/$name"
+      success "$name installed."
+    fi
+  done < "$plugins_file"
 
   echo ""
 }
@@ -337,8 +345,9 @@ link_dotfiles() {
 
   # All other zsh configs go under ~/.config/zsh/ (via ZDOTDIR)
   mkdir -p "$HOME/.config/zsh"
-  symlink "$DOTFILES_DIR/.zshrc"    "$HOME/.config/zsh/.zshrc"
-  symlink "$DOTFILES_DIR/.p10k.zsh" "$HOME/.config/zsh/.p10k.zsh"
+  symlink "$DOTFILES_DIR/.zshrc"      "$HOME/.config/zsh/.zshrc"
+  symlink "$DOTFILES_DIR/.p10k.zsh"   "$HOME/.config/zsh/.p10k.zsh"
+  symlink "$DOTFILES_DIR/zsh-plugins" "$HOME/.config/zsh/zsh-plugins"
 
   echo ""
 }
@@ -693,6 +702,7 @@ verify_install() {
   [[ -L "$HOME/.zshenv" ]] && echo "  ✓ ~/.zshenv is symlinked" || echo "  ✗ ~/.zshenv is NOT symlinked"
   [[ -L "$HOME/.config/zsh/.zshrc" ]] && echo "  ✓ ~/.config/zsh/.zshrc is symlinked" || echo "  ✗ ~/.config/zsh/.zshrc is NOT symlinked"
   [[ -L "$HOME/.config/zsh/.p10k.zsh" ]] && echo "  ✓ ~/.config/zsh/.p10k.zsh is symlinked" || echo "  ✗ ~/.config/zsh/.p10k.zsh is NOT symlinked"
+  [[ -L "$HOME/.config/zsh/zsh-plugins" ]] && echo "  ✓ ~/.config/zsh/zsh-plugins is symlinked" || echo "  ✗ ~/.config/zsh/zsh-plugins is NOT symlinked"
 
   echo ""
   echo "Git Config:"

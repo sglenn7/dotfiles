@@ -20,11 +20,32 @@ fi
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
-plugins=(
-  git
-  zsh-autosuggestions
-  zsh-syntax-highlighting
-)
+# fzf: must be on PATH before oh-my-zsh plugins load
+if command -v fzf &>/dev/null; then
+  export FZF_BASE="${${$(command -v fzf):h}:h}"
+elif command -v brew &>/dev/null; then
+  _fzf_brew_prefix="$(brew --prefix fzf 2>/dev/null)"
+  if [[ -n "$_fzf_brew_prefix" && -x "$_fzf_brew_prefix/bin/fzf" ]]; then
+    if [[ ":$PATH:" != *":$_fzf_brew_prefix/bin:"* ]]; then
+      PATH="${PATH:+${PATH}:}$_fzf_brew_prefix/bin"
+    fi
+    export FZF_BASE="$_fzf_brew_prefix"
+  fi
+  unset _fzf_brew_prefix
+elif [[ -x "$HOME/.fzf/bin/fzf" ]]; then
+  if [[ ":$PATH:" != *":$HOME/.fzf/bin:"* ]]; then
+    PATH="${PATH:+${PATH}:}$HOME/.fzf/bin"
+  fi
+  export FZF_BASE="$HOME/.fzf"
+fi
+
+plugins=()
+if [[ -f "${ZDOTDIR:-$HOME}/zsh-plugins" ]]; then
+  while IFS= read -r line; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    plugins+=("${line%% *}")
+  done < "${ZDOTDIR:-$HOME}/zsh-plugins"
+fi
 
 source "$ZSH/oh-my-zsh.sh"
 
@@ -142,7 +163,7 @@ fi
 # ==============================================================
 
 if [[ -f /proc/version ]] && grep -qi microsoft /proc/version; then
-  export BROWSER=wslview
+  export BROWSER="/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
 fi
 
 # ==============================================================

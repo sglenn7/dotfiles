@@ -43,6 +43,7 @@ brew "stow"        # For dotfile symlink management (optional)
 brew "tree"        # Directory tree visualization
 brew "fd"          # Fast alternative to find
 brew "ripgrep"     # Fast alternative to grep
+brew "fzf"         # Fuzzy finder (used by shell history search, fzf-tab)
 
 # ==============================================================
 # Cask Applications (macOS only)

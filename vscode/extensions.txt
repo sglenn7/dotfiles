@@ -1,5 +1,7 @@
+# Extensions installed on WSL: Ubuntu:
 adpyke.vscode-sql-formatter
 alefragnani.project-manager
+anthropic.claude-code
 batisteo.vscode-django
 charliermarsh.ruff
 codezombiech.gitignore

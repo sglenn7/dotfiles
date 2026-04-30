@@ -1,0 +1,12 @@
+# zsh-plugins — Single source of truth for oh-my-zsh plugins
+#
+# Format:  plugin-name  git-clone-url
+# Built-in oh-my-zsh plugins have no URL.
+# Lines starting with # and blank lines are ignored.
+
+git
+fzf
+zsh-autosuggestions      https://github.com/zsh-users/zsh-autosuggestions
+zsh-syntax-highlighting  https://github.com/zsh-users/zsh-syntax-highlighting
+zsh-fzf-history-search   https://github.com/joshskidmore/zsh-fzf-history-search
+fzf-tab                  https://github.com/Aloxaf/fzf-tab
