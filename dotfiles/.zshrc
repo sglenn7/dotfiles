@@ -117,39 +117,11 @@ if (( ${precmd_functions[(Ie)_dotfiles_update_reminder_once]} == 0 )); then
   precmd_functions+=(_dotfiles_update_reminder_once)
 fi
 
-# ssh-agent: cache SSH key for 48 hours to avoid repeated passphrase prompts
-if command -v ssh-agent &>/dev/null && command -v ssh-add &>/dev/null; then
-  SSH_AGENT_ENV="$HOME/.ssh/agent.env"
-
-  # Reuse an existing agent across new shells when possible.
-  if [[ -f "$SSH_AGENT_ENV" ]]; then
-    source "$SSH_AGENT_ENV" >/dev/null 2>&1 || true
-  fi
-
-  # Start a new agent if env is missing/stale.
-  if [[ -z "${SSH_AUTH_SOCK:-}" ]] || ! ssh-add -l >/dev/null 2>&1; then
-    eval "$(ssh-agent -s)" >/dev/null
-    mkdir -p "$HOME/.ssh"
-    {
-      echo "export SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
-      echo "export SSH_AGENT_PID=$SSH_AGENT_PID"
-    } > "$SSH_AGENT_ENV"
-    chmod 600 "$SSH_AGENT_ENV"
-  fi
-
-  # Delay key loading until first prompt to avoid instant-prompt console I/O warnings.
+# ssh-agent: use keychain to persist SSH keys across terminal sessions (48 hours)
+if command -v keychain &>/dev/null && [[ -f "$HOME/.ssh/id_ed25519" ]]; then
   _dotfiles_ensure_ssh_key_loaded() {
     [[ -t 0 && -t 1 ]] || return
-    [[ -f "$HOME/.ssh/id_ed25519.pub" ]] || return
-
-    local ssh_pub_key
-    ssh_pub_key="$(cut -d' ' -f1,2 "$HOME/.ssh/id_ed25519.pub" 2>/dev/null || true)"
-
-    if [[ -n "$ssh_pub_key" ]] && ! ssh-add -L 2>/dev/null | cut -d' ' -f1,2 | grep -Fqx "$ssh_pub_key"; then
-      SSH_ASKPASS_REQUIRE=never ssh-add -t 172800 "$HOME/.ssh/id_ed25519" </dev/tty
-    fi
-
-    # Run only once per shell session.
+    eval "$(keychain --eval --timeout 2880 --quiet id_ed25519)"
     precmd_functions=("${precmd_functions[@]/_dotfiles_ensure_ssh_key_loaded}")
   }
 

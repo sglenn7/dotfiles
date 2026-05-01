@@ -44,6 +44,7 @@ brew "tree"        # Directory tree visualization
 brew "fd"          # Fast alternative to find
 brew "ripgrep"     # Fast alternative to grep
 brew "fzf"         # Fuzzy finder (used by shell history search, fzf-tab)
+brew "keychain"    # SSH agent manager (persists keys across terminal sessions)
 
 # ==============================================================
 # Cask Applications (macOS only)
