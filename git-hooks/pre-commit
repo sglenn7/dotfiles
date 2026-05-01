@@ -1,0 +1,91 @@
+#!/bin/bash
+# Managed by dotfiles/install.sh — global pre-commit hook
+# Chains into local repo hooks, then checks for VS Code extension drift.
+
+# --- Chain into the local repo's pre-commit hook if one exists ---
+local_hook="$(git rev-parse --git-path hooks/pre-commit 2>/dev/null)"
+if [[ -x "$local_hook" ]]; then
+  "$local_hook" "$@" || exit $?
+fi
+
+# --- VS Code extension drift check ---
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+EXTENSIONS_FILE="$DOTFILES_DIR/vscode/extensions.txt"
+
+if ! command -v code &>/dev/null; then
+  exit 0
+fi
+
+if [[ ! -f "$EXTENSIONS_FILE" ]]; then
+  exit 0
+fi
+
+# Filter out comment lines from tracked file and WSL header from live output
+tracked_extensions=$(grep -v '^#' "$EXTENSIONS_FILE" 2>/dev/null | grep -v '^$' | sort)
+
+if ! live_extensions=$(code --list-extensions 2>/dev/null); then
+  exit 0
+fi
+
+current_extensions=$(printf '%s\n' "$live_extensions" | grep -v ':$' | sort)
+
+if [[ -z "$current_extensions" && -n "$tracked_extensions" ]]; then
+  exit 0
+fi
+if [[ "$current_extensions" == "$tracked_extensions" ]]; then
+  exit 0
+fi
+
+echo ""
+echo "=============================================="
+echo "  VS Code extensions have changed"
+echo "=============================================="
+echo ""
+
+added=$(comm -13 <(printf '%s\n' "$tracked_extensions") <(printf '%s\n' "$current_extensions"))
+removed=$(comm -23 <(printf '%s\n' "$tracked_extensions") <(printf '%s\n' "$current_extensions"))
+
+if [[ -n "$added" ]]; then
+  echo "  Added:"
+  while IFS= read -r ext; do
+    echo "    + $ext"
+  done <<< "$added"
+fi
+
+if [[ -n "$removed" ]]; then
+  echo "  Removed:"
+  while IFS= read -r ext; do
+    echo "    - $ext"
+  done <<< "$removed"
+fi
+
+echo ""
+
+update_choice=""
+if [[ -c /dev/tty ]]; then
+  read -p "Update extensions.txt with these changes? [y/n] " update_choice </dev/tty
+else
+  echo "Non-interactive shell detected — skipping extension update."
+  exit 0
+fi
+
+if [[ "$update_choice" =~ ^[Yy]$ ]]; then
+  printf '%s\n' "$current_extensions" > "$EXTENSIONS_FILE"
+
+  if git -C "$DOTFILES_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    if git -C "$DOTFILES_DIR" add "$EXTENSIONS_FILE" 2>/dev/null; then
+      echo "extensions.txt has been updated and staged."
+    else
+      echo "extensions.txt has been updated, but could not be staged automatically."
+      echo "Stage the file manually if needed, then re-run your commit."
+    fi
+  else
+    echo "extensions.txt has been updated, but $DOTFILES_DIR is not a Git work tree."
+    echo "Stage the file manually if needed, then re-run your commit."
+  fi
+  echo "Re-run your commit to include the updated extensions."
+  exit 1
+else
+  echo "Skipping extension update."
+  exit 0
+fi

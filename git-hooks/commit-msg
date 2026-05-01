@@ -1,0 +1,9 @@
+#!/bin/bash
+# Managed by dotfiles/install.sh — global commit-msg hook
+# Chains into the local repo's commit-msg hook if one exists.
+
+local_hook="$(git rev-parse --git-path hooks/commit-msg 2>/dev/null)"
+if [[ -x "$local_hook" ]]; then
+  "$local_hook" "$@"
+  exit $?
+fi

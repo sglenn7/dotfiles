@@ -113,6 +113,20 @@ restore_file ".p10k.zsh"        "$HOME/.config/zsh/.p10k.zsh"
 restore_file "settings.json"    "$VSCODE_SETTINGS_PATH/settings.json"
 restore_file "keybindings.json" "$VSCODE_SETTINGS_PATH/keybindings.json"
 
+# Restore previous core.hooksPath if one was backed up
+if command -v git >/dev/null 2>&1; then
+  previous_hooks_path=$(git config --global dotfiles.backup.hooksPath 2>/dev/null || echo "")
+  if [[ -n "$previous_hooks_path" ]]; then
+    git config --global core.hooksPath "$previous_hooks_path"
+    git config --global --unset dotfiles.backup.hooksPath
+    success "Restored core.hooksPath to: $previous_hooks_path"
+  else
+    info "No backed-up core.hooksPath found; leaving existing global core.hooksPath unchanged"
+  fi
+else
+  warn "Git not found in PATH; skipping core.hooksPath restore"
+fi
+
 echo ""
 success "Restore complete. Open a new terminal for changes to take effect."
 echo ""

@@ -1,0 +1,9 @@
+#!/bin/bash
+# Managed by dotfiles/install.sh — global pre-rebase hook
+# Chains into the local repo's pre-rebase hook if one exists.
+
+local_hook="$(git rev-parse --git-path hooks/pre-rebase 2>/dev/null)"
+if [[ -x "$local_hook" ]]; then
+  "$local_hook" "$@"
+  exit $?
+fi

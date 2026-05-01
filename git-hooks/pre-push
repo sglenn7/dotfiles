@@ -1,0 +1,9 @@
+#!/bin/bash
+# Managed by dotfiles/install.sh — global pre-push hook
+# Chains into the local repo's pre-push hook if one exists.
+
+local_hook="$(git rev-parse --git-path hooks/pre-push 2>/dev/null)"
+if [[ -x "$local_hook" ]]; then
+  "$local_hook" "$@"
+  exit $?
+fi

@@ -512,82 +512,76 @@ setup_vscode() {
 }
 
 # ==============================================================
-# GIT PRE-COMMIT HOOK (AUTO-EXPORT VS CODE EXTENSIONS)
+# GLOBAL GIT HOOKS (VS CODE EXTENSION DRIFT CHECK)
 # ==============================================================
 
 setup_git_hooks() {
   echo ""
   echo "=============================================="
-  echo "  Setting Up Git Hooks"
+  echo "  Setting Up Global Git Hooks"
   echo "=============================================="
   echo ""
 
-  local hooks_dir
+  local global_hooks_dir="$REPO_DIR/git-hooks"
 
-  # Check if we're in a git repo
-  if ! git -C "$REPO_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    warn "Not a git repository. Skipping git hooks setup."
+  # Validate that the pre-commit hook exists and is (or can be made) executable
+  local hook_error=""
+  if [[ ! -f "$global_hooks_dir/pre-commit" ]]; then
+    hook_error="Global pre-commit hook not found at: $global_hooks_dir/pre-commit"
+  elif ! chmod +x "$global_hooks_dir/pre-commit" 2>/dev/null; then
+    hook_error="Could not make $global_hooks_dir/pre-commit executable."
+  fi
+  if [[ -n "$hook_error" ]]; then
+    error "$hook_error"
+    warn "Skipping global hooks setup."
     echo ""
     return
   fi
 
-  hooks_dir="$(git -C "$REPO_DIR" rev-parse --git-path hooks)"
-  # Create hooks directory if it doesn't exist
-  mkdir -p "$hooks_dir"
+  # Make all hooks in the directory executable so pass-through wrappers work
+  find "$global_hooks_dir" -maxdepth 1 -type f -exec chmod +x {} + 2>/dev/null || true
 
-  # Create pre-commit hook to auto-export VS Code extensions
-  local pre_commit_hook="$hooks_dir/pre-commit"
-  local pre_commit_backup="$hooks_dir/pre-commit.user-backup"
-  local managed_hook_marker="# Managed by install.sh: VS Code extensions export hook"
-  local preserved_existing_hook=false
+  # Point git globally to our hooks directory
+  local current_hooks_path
+  current_hooks_path=$(git config --global core.hooksPath 2>/dev/null || echo "")
 
-  if [[ -f "$pre_commit_hook" ]] && ! grep -Fq "$managed_hook_marker" "$pre_commit_hook"; then
-    if [[ -e "$pre_commit_backup" ]]; then
-      warn "Existing pre-commit hook backup already exists at: $pre_commit_backup"
-      warn "Leaving current pre-commit hook unchanged to avoid overwriting customizations."
-      echo ""
-      return
-    fi
-
-    mv "$pre_commit_hook" "$pre_commit_backup"
-    preserved_existing_hook=true
-  fi
-
-  cat > "$pre_commit_hook" << HOOK_EOF
-#!/bin/bash
-$managed_hook_marker
-# Pre-commit hook: Auto-export VS Code extensions before commit
-
-EXISTING_HOOK="$pre_commit_backup"
-VSCODE_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")/../.." && pwd)/vscode"
-EXPORT_SCRIPT="\$VSCODE_DIR/export-extensions.sh"
-
-if [[ -x "\$EXISTING_HOOK" ]]; then
-  "\$EXISTING_HOOK" "\$@"
-  existing_hook_status=\$?
-  if [[ \$existing_hook_status -ne 0 ]]; then
-    exit \$existing_hook_status
-  fi
-fi
-
-if [[ -f "\$EXPORT_SCRIPT" && -x "\$EXPORT_SCRIPT" ]]; then
-  "\$EXPORT_SCRIPT" 2>/dev/null
-  if [[ \$? -eq 0 && -f "\$VSCODE_DIR/extensions.txt" ]]; then
-    git add "\$VSCODE_DIR/extensions.txt" 2>/dev/null || true
-  fi
-fi
-
-exit 0
-HOOK_EOF
-
-  chmod +x "$pre_commit_hook"
-
-  if [[ "$preserved_existing_hook" == true ]]; then
-    success "Pre-commit hook installed at: $pre_commit_hook"
-    success "Existing pre-commit hook preserved at: $pre_commit_backup"
+  if [[ "$current_hooks_path" == "$global_hooks_dir" ]]; then
+    info "core.hooksPath already set to: $global_hooks_dir"
   else
-    success "Pre-commit hook installed at: $pre_commit_hook"
+    if [[ -n "$current_hooks_path" ]]; then
+      warn "core.hooksPath is currently set to: $current_hooks_path"
+      if [[ -r /dev/tty ]]; then
+        read -rp "Override with dotfiles hooks directory? [Y/n]: " OVERRIDE_HOOKS </dev/tty || OVERRIDE_HOOKS="N"
+      else
+        OVERRIDE_HOOKS="N"
+        warn "Non-interactive environment detected; skipping global hooks setup."
+      fi
+      if [[ ! "${OVERRIDE_HOOKS:-Y}" =~ ^[Yy]$ ]]; then
+        warn "Skipping global hooks setup."
+        echo ""
+        return
+      fi
+      git config --global dotfiles.backup.hooksPath "$current_hooks_path"
+      info "Backed up previous core.hooksPath to dotfiles.backup.hooksPath"
+    fi
+    git config --global core.hooksPath "$global_hooks_dir"
+    success "Set core.hooksPath to: $global_hooks_dir"
   fi
+
+  # Clean up old managed hook from .git/hooks/ if it exists
+  local old_hook="$REPO_DIR/.git/hooks/pre-commit"
+  local managed_marker="# Managed by install.sh"
+  if [[ -f "$old_hook" ]] && grep -Fq "$managed_marker" "$old_hook"; then
+    rm "$old_hook"
+    info "Removed old managed pre-commit hook from .git/hooks/"
+    # Restore user's original hook if we backed it up
+    local old_backup="$REPO_DIR/.git/hooks/pre-commit.user-backup"
+    if [[ -f "$old_backup" ]]; then
+      mv "$old_backup" "$old_hook"
+      success "Restored original pre-commit hook from backup."
+    fi
+  fi
+
   echo ""
 }
 
