@@ -134,7 +134,7 @@ The script will:
 | **Shell Aliases** | Useful shortcuts like `la`, `ll`, `venv`, `activate` (in .zshrc) |
 | **Git** | Global user.name/email + global pre-commit hook for VS Code extension drift |
 | **VS Code** | Settings, keybindings, and auto-installed extensions (symlinked from repo) |
-| **Dotfiles** | Symlinked from repo; zsh configs live in `~/.config/zsh/` (via `ZDOTDIR`) |
+| **Dotfiles** | Symlinked from repo directly into `~/` |
 | **SSH Agent** | Auto-started with 48h key caching (configured in .zshrc) |
 
 The script is **safe to re-run**—it checks before installing and skips anything already in place.
@@ -160,7 +160,7 @@ If you didn't run `p10k configure` during install, do it now:
 p10k configure
 ```
 
-If `~/.config/zsh/.p10k.zsh` is symlinked by this repo (default after install), your changes are already in `dotfiles/.p10k.zsh`:
+If `~/.p10k.zsh` is symlinked by this repo (default after install), your changes are already in `dotfiles/.p10k.zsh`:
 
 ```bash
 git add dotfiles/.p10k.zsh && git commit -m "Update p10k config"
@@ -170,7 +170,7 @@ git push
 If you customized p10k before running this installer and don't have the symlink yet, copy once:
 
 ```bash
-cp ~/.config/zsh/.p10k.zsh dotfiles/.p10k.zsh
+cp ~/.p10k.zsh dotfiles/.p10k.zsh
 ```
 
 ### 3. **Sync your VS Code settings**
@@ -256,10 +256,10 @@ update.sh               ← Check for and apply tool updates (Homebrew, mise, uv
 Brewfile                ← Package list for Homebrew (macOS + Linux)
 
 dotfiles/
-  .zshenv               ← Bootstrap: sets ZDOTDIR, Homebrew PATH, mise shims (symlinked to ~/.zshenv)
-  .zshrc                ← Shell configuration (symlinked to ~/.config/zsh/.zshrc)
-  .p10k.zsh             ← Prompt theme config (symlinked to ~/.config/zsh/.p10k.zsh)
-  zsh-plugins           ← Plugin list with git URLs (symlinked to ~/.config/zsh/zsh-plugins)
+  .zshenv               ← Bootstrap: Homebrew PATH, mise shims (symlinked to ~/.zshenv)
+  .zshrc                ← Shell configuration (symlinked to ~/.zshrc)
+  .p10k.zsh             ← Prompt theme config (symlinked to ~/.p10k.zsh)
+  zsh-plugins           ← Plugin list with git URLs (symlinked to ~/.zsh-plugins)
 
 git-hooks/
   pre-commit            ← Global hook: chains local hooks, checks VS Code extension drift
@@ -271,7 +271,7 @@ vscode/
   export-extensions.sh  ← Helper script to export extensions
 ```
 
-> **Config location note**: zsh configs are placed under `~/.config/zsh/` (via `ZDOTDIR`) instead of the home directory root, so your `~/` stays uncluttered. Only `~/.zshenv` lives in `~/` because zsh needs it there as a bootstrap to set `ZDOTDIR`, Homebrew PATH, and mise shims.
+> **Config location note**: All zsh configs are symlinked directly into `~/` for simplicity and compatibility with tools that expect them there (oh-my-zsh, package installers, etc.).
 
 ---
 
@@ -290,7 +290,7 @@ alias gp="git push"
 Reload your shell to apply:
 
 ```bash
-source ~/.config/zsh/.zshrc
+source ~/.zshrc
 ```
 
 ### Private/Local-Only Settings
@@ -380,10 +380,10 @@ bash install.sh   # Re-run to auto-install any new extensions
 # 1. Run the interactive prompt wizard
 p10k configure
 
-# 2. If your ~/.config/zsh/.p10k.zsh is symlinked (default after install),
+# 2. If your ~/.p10k.zsh is symlinked (default after install),
 #    changes already write through to dotfiles/.p10k.zsh
 #    If not symlinked yet, copy once:
-#    cp ~/.config/zsh/.p10k.zsh dotfiles/.p10k.zsh
+#    cp ~/.p10k.zsh dotfiles/.p10k.zsh
 
 # 3. Commit and push
 git add dotfiles/.p10k.zsh
@@ -496,7 +496,7 @@ It will detect and fix broken symlinks.
 ls -la ~/ | grep dotfiles_backup
 
 # Manually copy files if needed
-cp ~/.dotfiles_backup_2026-04-17/.zshrc ~/.config/zsh/.zshrc
+cp ~/.dotfiles_backup_2026-04-17/.zshrc ~/.zshrc
 ```
 
 ### Git config not set

@@ -107,9 +107,9 @@ restore_file() {
 }
 
 restore_file ".zshenv"          "$HOME/.zshenv"
-mkdir -p "$HOME/.config/zsh"
-restore_file ".zshrc"           "$HOME/.config/zsh/.zshrc"
-restore_file ".p10k.zsh"        "$HOME/.config/zsh/.p10k.zsh"
+restore_file ".zshrc"           "$HOME/.zshrc"
+restore_file ".p10k.zsh"        "$HOME/.p10k.zsh"
+restore_file ".zsh-plugins"     "$HOME/.zsh-plugins"
 restore_file "settings.json"    "$VSCODE_SETTINGS_PATH/settings.json"
 restore_file "keybindings.json" "$VSCODE_SETTINGS_PATH/keybindings.json"
 

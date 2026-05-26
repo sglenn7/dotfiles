@@ -6,10 +6,6 @@
 # Do NOT edit ~/.zshenv directly; edit this file in the repo instead.
 # ==============================================================
 
-# XDG: tell zsh to look for .zshrc and other configs in ~/.config/zsh/
-# instead of dumping them directly in the home directory.
-export ZDOTDIR="$HOME/.config/zsh"
-
 # Homebrew: add brew to PATH for all shell types
 # Handles Apple Silicon (/opt/homebrew), Intel (/usr/local), and Linux (/home/linuxbrew)
 if [[ -x "/opt/homebrew/bin/brew" ]]; then

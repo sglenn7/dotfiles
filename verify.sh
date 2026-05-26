@@ -88,9 +88,9 @@ check_symlink() {
 }
 
 check_symlink "$HOME/.zshenv" "$DOTFILES_DIR/.zshenv"
-check_symlink "$HOME/.config/zsh/.zshrc" "$DOTFILES_DIR/.zshrc"
-check_symlink "$HOME/.config/zsh/.p10k.zsh" "$DOTFILES_DIR/.p10k.zsh"
-check_symlink "$HOME/.config/zsh/zsh-plugins" "$DOTFILES_DIR/zsh-plugins"
+check_symlink "$HOME/.zshrc" "$DOTFILES_DIR/.zshrc"
+check_symlink "$HOME/.p10k.zsh" "$DOTFILES_DIR/.p10k.zsh"
+check_symlink "$HOME/.zsh-plugins" "$DOTFILES_DIR/zsh-plugins"
 
 if [[ -d "$VSCODE_SETTINGS_PATH" ]]; then
   check_symlink "$VSCODE_SETTINGS_PATH/settings.json" "$VSCODE_DIR/settings.json"

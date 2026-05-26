@@ -108,9 +108,9 @@ prompt_user() {
 backup_existing() {
   local files_to_backup=(
     "$HOME/.zshenv"
-    "$HOME/.config/zsh/.zshrc"
-    "$HOME/.config/zsh/.p10k.zsh"
-    "$HOME/.config/zsh/zsh-plugins"
+    "$HOME/.zshrc"
+    "$HOME/.p10k.zsh"
+    "$HOME/.zsh-plugins"
     "$VSCODE_SETTINGS_PATH/settings.json"
     "$VSCODE_SETTINGS_PATH/keybindings.json"
   )
@@ -340,14 +340,10 @@ link_dotfiles() {
   echo "=============================================="
   echo ""
 
-  # .zshenv stays in home dir — it bootstraps ZDOTDIR for zsh
-  symlink "$DOTFILES_DIR/.zshenv" "$HOME/.zshenv"
-
-  # All other zsh configs go under ~/.config/zsh/ (via ZDOTDIR)
-  mkdir -p "$HOME/.config/zsh"
-  symlink "$DOTFILES_DIR/.zshrc"      "$HOME/.config/zsh/.zshrc"
-  symlink "$DOTFILES_DIR/.p10k.zsh"   "$HOME/.config/zsh/.p10k.zsh"
-  symlink "$DOTFILES_DIR/zsh-plugins" "$HOME/.config/zsh/zsh-plugins"
+  symlink "$DOTFILES_DIR/.zshenv"     "$HOME/.zshenv"
+  symlink "$DOTFILES_DIR/.zshrc"      "$HOME/.zshrc"
+  symlink "$DOTFILES_DIR/.p10k.zsh"   "$HOME/.p10k.zsh"
+  symlink "$DOTFILES_DIR/zsh-plugins" "$HOME/.zsh-plugins"
 
   echo ""
 }
@@ -631,8 +627,8 @@ prompt_p10k() {
   echo "=============================================="
   echo ""
 
-  if [[ -f "$HOME/.config/zsh/.p10k.zsh" ]]; then
-    info "Existing p10k config found at ~/.config/zsh/.p10k.zsh — skipping reconfiguration will keep it."
+  if [[ -f "$HOME/.p10k.zsh" ]]; then
+    info "Existing p10k config found at ~/.p10k.zsh — skipping reconfiguration will keep it."
     read -rp "Re-run 'p10k configure' to overwrite your existing config? [y/N]: " RUN_P10K
     RUN_P10K="${RUN_P10K:-N}"
   else
@@ -647,10 +643,10 @@ prompt_p10k() {
       if [[ -f "$p10k_script" ]]; then
         info "Launching p10k configure in an interactive zsh subshell..."
         if zsh -ic "source '$p10k_script' && p10k configure"; then
-          success "p10k configured. Your config is at ~/.config/zsh/.p10k.zsh"
+          success "p10k configured. Your config is at ~/.p10k.zsh"
           echo ""
           echo "To version-control this config, run:"
-          echo "  cp ~/.config/zsh/.p10k.zsh dotfiles/.p10k.zsh"
+          echo "  cp ~/.p10k.zsh dotfiles/.p10k.zsh"
           echo "  git add dotfiles/.p10k.zsh && git commit -m 'Update p10k config'"
         else
           warn "p10k configure failed. Open a new zsh terminal and run: p10k configure"
@@ -701,9 +697,9 @@ verify_install() {
   echo ""
   echo "Symlinks:"
   [[ -L "$HOME/.zshenv" ]] && echo "  ✓ ~/.zshenv is symlinked" || echo "  ✗ ~/.zshenv is NOT symlinked"
-  [[ -L "$HOME/.config/zsh/.zshrc" ]] && echo "  ✓ ~/.config/zsh/.zshrc is symlinked" || echo "  ✗ ~/.config/zsh/.zshrc is NOT symlinked"
-  [[ -L "$HOME/.config/zsh/.p10k.zsh" ]] && echo "  ✓ ~/.config/zsh/.p10k.zsh is symlinked" || echo "  ✗ ~/.config/zsh/.p10k.zsh is NOT symlinked"
-  [[ -L "$HOME/.config/zsh/zsh-plugins" ]] && echo "  ✓ ~/.config/zsh/zsh-plugins is symlinked" || echo "  ✗ ~/.config/zsh/zsh-plugins is NOT symlinked"
+  [[ -L "$HOME/.zshrc" ]] && echo "  ✓ ~/.zshrc is symlinked" || echo "  ✗ ~/.zshrc is NOT symlinked"
+  [[ -L "$HOME/.p10k.zsh" ]] && echo "  ✓ ~/.p10k.zsh is symlinked" || echo "  ✗ ~/.p10k.zsh is NOT symlinked"
+  [[ -L "$HOME/.zsh-plugins" ]] && echo "  ✓ ~/.zsh-plugins is symlinked" || echo "  ✗ ~/.zsh-plugins is NOT symlinked"
 
   echo ""
   echo "Git Config:"
