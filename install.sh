@@ -382,6 +382,13 @@ install_mise() {
     success "Python $PYTHON_VERSION set as global."
   fi
 
+  # Regenerate shims so python is available on PATH immediately in this session
+  mise reshim
+  local shims_dir="${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims"
+  if [[ -d "$shims_dir" && ":$PATH:" != *":$shims_dir:"* ]]; then
+    export PATH="$shims_dir:$PATH"
+  fi
+
   echo ""
 }
 

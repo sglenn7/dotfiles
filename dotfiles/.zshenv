@@ -23,8 +23,11 @@ elif [[ -x "$HOME/.linuxbrew/bin/brew" ]]; then
 fi
 
 # Mise: runtime version manager
-# Ensures mise tools are available in PATH
+# Shims ensure mise-managed tools (python, node, etc.) are on PATH in all contexts
+# (non-interactive shells, scripts, editors). Interactive shells get the full
+# `mise activate` in .zshrc which overrides shims with directory-aware versions.
 export MISE_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/mise"
+export PATH="${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims:$PATH"
 
 # Ensure local bin directory is on PATH
 # Useful for locally installed tools

@@ -3,9 +3,12 @@
 # Chains into local repo hooks, then checks for VS Code extension drift.
 
 # --- Chain into the local repo's pre-commit hook if one exists ---
-local_hook="$(git rev-parse --git-path hooks/pre-commit 2>/dev/null)"
-if [[ -x "$local_hook" ]]; then
-  "$local_hook" "$@" || exit $?
+git_common_dir="$(git rev-parse --git-common-dir 2>/dev/null)"
+if [[ -n "$git_common_dir" ]]; then
+  local_hook="$git_common_dir/hooks/pre-commit"
+  if [[ -x "$local_hook" ]]; then
+    "$local_hook" "$@" || exit $?
+  fi
 fi
 
 # --- VS Code extension drift check ---

@@ -33,6 +33,12 @@ echo "  Verifying Dev Environment Setup"
 echo "=============================================="
 echo ""
 
+# Ensure mise shims are on PATH (verify.sh runs in bash, not interactive zsh)
+_mise_shims="${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims"
+if [[ -d "$_mise_shims" && ":$PATH:" != *":$_mise_shims:"* ]]; then
+  export PATH="$_mise_shims:$PATH"
+fi
+
 # Detect VS Code path
 if [[ "$(uname)" == "Darwin" ]]; then
   VSCODE_SETTINGS_PATH="$HOME/Library/Application Support/Code/User"
@@ -84,6 +90,7 @@ check_symlink() {
 check_symlink "$HOME/.zshenv" "$DOTFILES_DIR/.zshenv"
 check_symlink "$HOME/.config/zsh/.zshrc" "$DOTFILES_DIR/.zshrc"
 check_symlink "$HOME/.config/zsh/.p10k.zsh" "$DOTFILES_DIR/.p10k.zsh"
+check_symlink "$HOME/.config/zsh/zsh-plugins" "$DOTFILES_DIR/zsh-plugins"
 
 if [[ -d "$VSCODE_SETTINGS_PATH" ]]; then
   check_symlink "$VSCODE_SETTINGS_PATH/settings.json" "$VSCODE_DIR/settings.json"

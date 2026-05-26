@@ -2,8 +2,11 @@
 # Managed by dotfiles/install.sh — global post-merge hook
 # Chains into the local repo's post-merge hook if one exists.
 
-local_hook="$(git rev-parse --git-path hooks/post-merge 2>/dev/null)"
-if [[ -x "$local_hook" ]]; then
-  "$local_hook" "$@"
-  exit $?
+git_common_dir="$(git rev-parse --git-common-dir 2>/dev/null)"
+if [[ -n "$git_common_dir" ]]; then
+  local_hook="$git_common_dir/hooks/post-merge"
+  if [[ -x "$local_hook" ]]; then
+    "$local_hook" "$@"
+    exit $?
+  fi
 fi

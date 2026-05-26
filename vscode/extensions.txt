@@ -11,7 +11,6 @@ donjayamanne.python-environment-manager
 donjayamanne.python-extension-pack
 dvirtz.parquet-viewer
 eamodio.gitlens
-github.copilot-chat
 github.vscode-pull-request-github
 janisdd.vscode-edit-csv
 jimasp.behave-vsc

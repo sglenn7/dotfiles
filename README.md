@@ -126,14 +126,16 @@ The script will:
 | Component | Details |
 |-----------|---------|
 | **Shell** | zsh + oh-my-zsh + Powerlevel10k theme |
-| **Shell Plugins** | zsh-autosuggestions, zsh-syntax-highlighting |
+| **Shell Plugins** | zsh-autosuggestions, zsh-syntax-highlighting, fzf-tab, zsh-fzf-history-search |
 | **Package Manager** | Homebrew (unified across macOS and Linux) |
 | **Runtime Manager** | mise (handles Python 3.14 by default + other tools) |
 | **Python Tools** | uv (fast package manager) |
-| **Shell Aliases** | Useful shortcuts like `la`, `ll` (in .zshrc) |
-| **Git** | Global user.name/email configured |
+| **CLI Utilities** | fd, ripgrep, fzf, tree |
+| **Shell Aliases** | Useful shortcuts like `la`, `ll`, `venv`, `activate` (in .zshrc) |
+| **Git** | Global user.name/email + global pre-commit hook for VS Code extension drift |
 | **VS Code** | Settings, keybindings, and auto-installed extensions (symlinked from repo) |
 | **Dotfiles** | Symlinked from repo; zsh configs live in `~/.config/zsh/` (via `ZDOTDIR`) |
+| **SSH Agent** | Auto-started with 48h key caching (configured in .zshrc) |
 
 The script is **safe to re-run**—it checks before installing and skips anything already in place.
 
@@ -196,7 +198,7 @@ git commit -m "Add VS Code extensions"
 git push
 ```
 
-**Going forward**, this happens automatically before each git commit via a pre-commit hook.
+**Going forward**, the global pre-commit hook detects extension drift on each commit and prompts you to update the file if extensions have changed.
 
 Next time you set up on a new machine, these extensions will auto-install.
 
@@ -246,16 +248,21 @@ export DOTFILES_UPDATE_STARTUP_PROMPT=1
 
 ```
 install.sh              ← Main installer (run on macOS or WSL)
-install.ps1             ← Windows entry point (optional)
+install.ps1             ← Windows entry point (optional, installs WSL then calls install.sh)
 backup.sh               ← Restore a previous backup
 verify.sh               ← Check installation status
+update.sh               ← Check for and apply tool updates (Homebrew, mise, uv)
 
 Brewfile                ← Package list for Homebrew (macOS + Linux)
 
 dotfiles/
-  .zshenv               ← Bootstrap: sets ZDOTDIR, Homebrew PATH (symlinked to ~/.zshenv)
+  .zshenv               ← Bootstrap: sets ZDOTDIR, Homebrew PATH, mise shims (symlinked to ~/.zshenv)
   .zshrc                ← Shell configuration (symlinked to ~/.config/zsh/.zshrc)
   .p10k.zsh             ← Prompt theme config (symlinked to ~/.config/zsh/.p10k.zsh)
+  zsh-plugins           ← Plugin list with git URLs (symlinked to ~/.config/zsh/zsh-plugins)
+
+git-hooks/
+  pre-commit            ← Global hook: chains local hooks, checks VS Code extension drift
 
 vscode/
   settings.json         ← VS Code settings (symlinked, version-controlled)
@@ -264,7 +271,7 @@ vscode/
   export-extensions.sh  ← Helper script to export extensions
 ```
 
-> **Config location note**: zsh configs are placed under `~/.config/zsh/` (via `ZDOTDIR`) instead of the home directory root, so your `~/` stays uncluttered. Only `~/.zshenv` lives in `~/` because zsh needs it there as a bootstrap to find the rest.
+> **Config location note**: zsh configs are placed under `~/.config/zsh/` (via `ZDOTDIR`) instead of the home directory root, so your `~/` stays uncluttered. Only `~/.zshenv` lives in `~/` because zsh needs it there as a bootstrap to set `ZDOTDIR`, Homebrew PATH, and mise shims.
 
 ---
 
@@ -475,7 +482,7 @@ It will detect and fix broken symlinks.
 **Cause**: `code` command not in PATH, or network issue.
 
 **Fixes**:
-- On WSL: Install the VS Code Remote WSL extension, then use `code .` in your WSL terminal
+- On WSL: Ensure the VS Code WSL extension is installed, then run `code .` from WSL terminal
 - Retry manually: `code --install-extension <extension-id>`
 - Check `verify.sh` output to see what failed
 
@@ -502,6 +509,20 @@ git config --global user.name "Your Name"
 git config --global user.email "you@example.com"
 ```
 
+### Python not found (but mise shows it installed)
+
+**Cause**: mise shims aren't on PATH. This happens if `~/.zshenv` wasn't sourced (e.g. running in plain bash without opening a new terminal after install).
+
+**Fix**:
+```bash
+# Open a new terminal (sources .zshenv which adds shims to PATH)
+python --version
+
+# Or manually add shims for the current session:
+export PATH="${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims:$PATH"
+python --version
+```
+
 ### Python version mismatch
 
 **Cause**: Installed version doesn't match what's in mise config.
@@ -515,15 +536,16 @@ python --version
 
 ### Pre-commit hook not running extension export
 
-**Cause**: Pre-commit hook not installed or not executable.
+**Cause**: Global hooks path not configured, or hook not executable.
 
 **Fix**:
 ```bash
-# Re-run install.sh (it sets up the hook)
+# Re-run install.sh (it sets up global core.hooksPath)
 bash install.sh
 
-# Or manually make it executable
-chmod +x .git/hooks/pre-commit
+# Or verify manually:
+git config --global core.hooksPath    # should show <repo>/git-hooks
+chmod +x git-hooks/pre-commit
 ```
 
 ---
@@ -546,14 +568,14 @@ Fix it by setting up an SSH key (see Prerequisites) and switching the remote URL
 
 ---
 
-## VS Code Remote WSL Setup (Windows Only)
+## VS Code WSL Setup (Windows Only)
 
 If you use VS Code on Windows with WSL:
 
-1. **Install the extension**: Install "Remote - WSL" from VS Code Marketplace
+1. **Install the extension**: Install the "WSL" extension from VS Code Marketplace
 2. **Clone dotfiles in WSL**: Run `install.sh` from WSL terminal
-3. **Open in WSL**: From Windows terminal, run `code .` in your WSL directory
-4. **Settings scope**: In a WSL Remote window, VS Code uses the symlinked WSL settings from this repo
+3. **Open in WSL**: From WSL terminal, run `code .` in your project directory
+4. **Settings scope**: In a WSL window, VS Code uses the symlinked WSL settings from this repo
 
 Your native Windows VS Code app settings are separate and can be managed with VS Code Settings Sync.
 
@@ -572,14 +594,14 @@ Your native Windows VS Code app settings are separate and can be managed with VS
 
 - Linuxbrew (Homebrew on Linux) is installed automatically
 - VS Code settings are symlinked from `~/.config/Code/User/`
-- The `code` command requires the VS Code Remote WSL extension
-- Run commands from WSL terminal after Remote WSL extension is installed
+- The `code` command requires the VS Code WSL extension
+- Run commands from WSL terminal after the WSL extension is installed
 
 ### Windows
 
 - `install.ps1` must be run as Administrator
 - WSL is installed automatically if not present (reboot required)
-- VS Code on Windows reads cloud Settings Sync + Remote WSL extension communicates to WSL settings
+- VS Code on Windows reads cloud Settings Sync + WSL extension communicates to WSL settings
 - Git for Windows recommended: https://git-scm.com/download/win
 
 ---
