@@ -1,0 +1,6 @@
+.venv/
+.env
+.zshrc.local
+.claude/settings.local.json
+*.pem
+*.key
