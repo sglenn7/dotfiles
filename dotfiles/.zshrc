@@ -180,3 +180,6 @@ alias activate="source .venv/bin/activate"
 #   - Employer-specific paths or environment variables
 #   - Machine-specific settings
 [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

@@ -13,7 +13,6 @@ dvirtz.parquet-viewer
 eamodio.gitlens
 github.vscode-pull-request-github
 janisdd.vscode-edit-csv
-jimasp.behave-vsc
 kevinrose.vsc-python-indent
 mhutchie.git-graph
 ms-python.autopep8
@@ -32,6 +31,8 @@ njpwerner.autodocstring
 randomfractalsinc.vscode-data-preview
 redhat.vscode-yaml
 snowflake.snowflake-vsc
+visualstudioexptteam.intellicode-api-usage-examples
+visualstudioexptteam.vscodeintellicode
 vscjava.migrate-java-to-azure
 wholroyd.jinja
 wmanth.jar-viewer
